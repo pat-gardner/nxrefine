@@ -32,12 +32,14 @@ def chunkify(arr, chunkshape, mask=None):
     # Where to truncate arr
     bounds = (np.array(arr.shape) // chunkshape) * chunkshape
     dx,dy,dz = chunkshape
-    pix_per_slab = 8 # Height of slabs
-    ds = pix_per_slab*dx
+    # ds should be close to 50, but also a multiple of dx
+    ds = (50 // dx) * dx
+    pix_per_slab = ds // dx
     numslabs = math.ceil(bounds[0] / ds)
     result = np.ma.masked_array(np.zeros(bounds // chunkshape, dtype=arr.dtype))
     if mask is not None:
         mask = mask[:bounds[1], :bounds[2]].astype(bool)
+    ipdb.set_trace()
     for s in trange(numslabs):
         gc.collect() # we need to clean up leftover slabs
         try:

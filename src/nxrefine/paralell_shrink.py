@@ -19,8 +19,9 @@ def chunkify(arr, chunkshape, mask=None):
     # Where to truncate arr
     bounds = (np.array(arr.shape) // chunkshape) * chunkshape
     dx,dy,dz = chunkshape
-    pix_per_slab = 8 # Height of slabs
-    ds = pix_per_slab*dx
+    # ds should be close to 50, but also a multiple of dx
+    ds = (50 // dx) * dx
+    pix_per_slab = ds // dx
     numslabs = math.ceil(bounds[0] / ds)
     result = np.ma.masked_array(np.zeros(bounds // chunkshape, dtype=arr.dtype))
     if mask is not None:
@@ -33,13 +34,13 @@ def chunkify(arr, chunkshape, mask=None):
         if s % 5 == 0 and s > 0:
             avg = tot_time / (s+1)
             print('PID {}: slab {} / {} ({} s/slab, {} m left)'.format(
-                    os.getpid(), s+1, numslabs, avg, (avg*numslabs - tot_time)/60 ))
+                    os.getpid(), s, numslabs-1, avg, (avg*numslabs - tot_time)/60 ))
         try:
             slab = arr[s*ds : (s+1)*ds, :bounds[1], :bounds[2]].nxdata
         except:
             # Slab upper bound went beyond arr.shape[0]
             slab = arr[s*ds:bounds[0], :bounds[1], :bounds[2]].nxdata
-        for x in range(ds//dx):
+        for x in range(pix_per_slab):
             real_x = x + s*pix_per_slab
             if real_x >= result.shape[0]:
                 # We reached the end of the array
@@ -150,7 +151,7 @@ def run(file, size):
         # can be loaded and passed to chunkify()
         results = pool.imap_unordered(run_chunks, ( (olddata_dict[e].data.nxfilename,
                     chunkshape, mask_dict[e], e) for e in entries))
-        # Process the results in whichever order they finish
+        # Process the results in whatever order they finish
         for res, entry in results:
             print('Processing result for {}'.format(entry))
             olddata = olddata_dict[entry]
