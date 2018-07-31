@@ -118,6 +118,8 @@ class WorkflowDialog(BaseDialog):
                 self.grid.addWidget(header[column], row, col)
         self.scans = {}
         self.scans_backup = {}
+
+        # Create (unchecked) checkboxes
         for wrapper_file, scan in wrapper_files.items():
             scan_label = os.path.basename(scan)
             row += 1
